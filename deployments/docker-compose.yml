@@ -1,0 +1,51 @@
+version: '3'
+services:
+  mapcache:
+    build: mapproxy
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data/mapproxycache:/mymapproxy
+    working_dir: /mymapproxy
+
+  timescaledb:
+    image: timescale/timescaledb-postgis:1.4.2-pg11
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
+  timescaledb_init:
+    build: timescaledb_init
+    environment:
+      POSTGRES_PASSWORD: postgres
+
+  aprs_receiver:
+    build:
+      context: ../
+      dockerfile: build/package/Dockerfile
+    environment:
+      POSTGRES_PASSWORD: postgres
+    command: ["/aprs_receiver"]
+    ports:
+      - "8081:8081"
+
+  udp_receiver:
+    build:
+      context: ../
+      dockerfile: build/package/Dockerfile
+    environment:
+      POSTGRES_PASSWORD: postgres
+    command: ["/udp_receiver"]
+    ports:
+      - "8082:8082"
+
+  webserverr:
+    build:
+      context: ../
+      dockerfile: build/package/Dockerfile
+    environment:
+      POSTGRES_PASSWORD: postgres
+    command: ["/web_server"]
+    ports:
+      - "8083:8083"
