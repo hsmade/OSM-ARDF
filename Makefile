@@ -1,5 +1,8 @@
 VERSION := $(shell git describe --tags)
 BUILD := $(shell git rev-parse --short HEAD)
+ifndef VERSION
+VERSION = 0.0.0
+endif
 ifdef BUILD
 TAG = "${VERSION}-${BUILD}"
 else
