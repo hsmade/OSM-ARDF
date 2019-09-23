@@ -10,9 +10,7 @@ jobs:
  
     steps:
     - uses: actions/checkout@v1
-    - name: Build docker image
-      run: make package
-    - name: Upload image
+    - name: Build and upload image
       env: 
         super_secret: DOCKER_TOKEN
-      run: make upload
+      run: echo ${DOCKER_TOKEN} | docker login hsmade --password-stdin && make upload
