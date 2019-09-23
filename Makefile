@@ -1,9 +1,9 @@
 VERSION := $(shell git describe --tags)
 BUILD := $(shell git rev-parse --short HEAD)
 ifdef BUILD
-TAG = "${VERSION}-${BUILD}
+TAG = "${VERSION}-${BUILD}"
 else
-TAG = "${VERSION}
+TAG = "${VERSION}"
 endif
 
 package: test
