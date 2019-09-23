@@ -1,6 +1,6 @@
 # OSM ARDF visualiser
 ![build status](https://github.com/hsmade/OSM-ARDF/workflows/Docker%20Image%20CI/badge.svg)
-![go report](https://goreportcard.com/report/github.com/hsmade/OSM-ARDF)
+![go report](https://goreportcard.com/badge/github.com/hsmade/OSM-ARDF)
 
 This project aims to make ARDF easy by visualising ARPS stations with their bearings on an [OSM map](https://www.openstreetmap.org).
 For further documentation on the project, see [docs/](docs/README.md).
