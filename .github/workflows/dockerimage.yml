@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Sign-in to Docker
-        uses: actions/docker/login@master
-        env:
-          DOCKER_USERNAME: hsmade
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+      uses: actions/docker/login@master
+      env:
+        DOCKER_USERNAME: hsmade
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
     - uses: actions/checkout@v1
     - name: Build and upload image
       run: make upload
