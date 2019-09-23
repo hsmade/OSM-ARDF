@@ -36,4 +36,5 @@ clean:
 	go clean
 
 upload: package
+	docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
 	docker push ${IMAGE}:${TAG}
