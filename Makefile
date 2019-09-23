@@ -1,8 +1,13 @@
 VERSION := $(shell git describe --tags)
 BUILD := $(shell git rev-parse --short HEAD)
+ifdef BUILD
+TAG = "${VERSION}-${BUILD}
+else
+TAG = "${VERSION}
+endif
 
 package: test
-	docker build -t hsmade/osm-ardf -f build/package/Dockerfile .
+	docker build -t hsmade/osm-ardf:${TAG} -f build/package/Dockerfile .
 
 lint:
 	go fmt ./...
@@ -23,3 +28,7 @@ build: test
 
 clean:
 	go clean
+
+upload: package
+	echo ${DOCKER_TOKEN} | docker login hsmade --password-stdin
+	docker push hsmade/osm-ardf:${TAG}
