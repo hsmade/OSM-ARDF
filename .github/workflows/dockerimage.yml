@@ -13,4 +13,4 @@ jobs:
     - name: Build and upload image
       env: 
         super_secret: DOCKER_TOKEN
-      run: echo ${DOCKER_TOKEN} | docker login --username hsmade --password-stdin && make upload
+      run: docker login -u hsmade -p "${DOCKER_TOKEN}" && make upload
