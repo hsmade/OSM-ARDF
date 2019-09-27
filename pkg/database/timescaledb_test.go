@@ -2,6 +2,8 @@ package database
 
 import (
 	"github.com/hsmade/OSM-ARDF/pkg/measurement"
+	"os"
+	"strconv"
 	"testing"
 )
 
@@ -21,7 +23,7 @@ func TestTimescaleDB_Add(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -39,28 +41,33 @@ func TestTimescaleDB_Add(t *testing.T) {
 }
 
 func TestTimescaleDB_Connect(t *testing.T) {
+	dockerPort, err := strconv.Atoi(os.Getenv("POSTGRES_PORT"))
+	if err != nil {
+		t.Fatalf("failed to get port for postgresql instance running in docker: %e", err)
+	}
 	type fields struct {
 		Host     string
 		Port     uint16
 		Username string
 		Password string
+		DatabaseName string
 	}
 	tests := []struct {
 		name    string
 		fields  fields
 		wantErr bool
 	}{
-		// FIXME: start up a postgres server before this
-		//{
-		//	name: "Happy path",
-		//	fields: fields{
-		//		Host:     "localhost",
-		//		Port:     5432,
-		//		Username: "postgres",
-		//		Password: "postgres",
-		//	},
-		//	wantErr: false,
-		//},
+		{
+			name: "Happy path",
+			fields: fields{
+				Host:     "localhost",
+				Port:     uint16(dockerPort),
+				Username: "postgres",
+				Password: "postgres",
+				DatabaseName: "postgres",
+			},
+			wantErr: false,
+		},
 		{
 			name: "Connection failed",
 			fields: fields{
