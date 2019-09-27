@@ -30,6 +30,7 @@ test: download lint
 build: test
 	@go build -ldflags="-w -s" -o dist/aprs_receiver ./cmd/aprs_receiver/aprs_receiver.go
 	@go build -ldflags="-w -s" -o dist/udp_receiver ./cmd/udp_receiver/udp_receiver.go
+	@go build -ldflags="-w -s" -o dist/udp_receiver ./cmd/stdin_receiver/stdin_receiver.go
 	@go build -ldflags="-w -s" -o dist/web_server ./cmd/web_server/web_server.go
 
 clean:
