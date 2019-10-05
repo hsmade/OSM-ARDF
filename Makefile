@@ -25,10 +25,16 @@ download:
 	@go mod verify
 
 test: download lint
-	$(eval CONTAINER = $(shell docker run -d -P -e POSTGRES_PASSWORD=postgres timescale/timescaledb-postgis:1.4.2-pg11))
-	$(eval PORT = $(shell docker inspect $(CONTAINER) | grep HostPort | grep -E -o [0-9]+))
+	$(eval CONTAINER := $(shell docker run -d -P -e POSTGRES_PASSWORD=postgres timescale/timescaledb-postgis:1.4.2-pg11))
+	@echo waiting for postgres to startup
 	@sleep 5
-	@POSTGRES_PORT=$(PORT) go test -v ./... || (docker kill ${CONTAINER};false)
+	$(eval PORT := $(shell docker inspect $(CONTAINER) | grep HostPort | grep -E -o [0-9]+))
+	$(eval IP := $(shell docker inspect $(CONTAINER) | grep HostIp| grep -E -o [0-9.]+))
+	@echo init postgres
+	@docker exec -ti -e PGPASSWORD=postgres $(CONTAINER) psql -U postgres -c "create table doppler (time TIMESTAMP not null default now(), name text not null, lat real not null, lon real not null, bearing INT);"
+	@docker exec -ti -e PGPASSWORD=postgres $(CONTAINER) psql -U postgres -c "SELECT create_hypertable('doppler', 'time', chunk_time_interval => interval '1 minute');"
+	@echo postgress: $(IP):$(PORT)
+	@POSTGRES_PORT=$(PORT) POSTGRES_IP=$(IP) go test -v ./... || (docker kill ${CONTAINER};false)
 	@docker kill ${CONTAINER}
 
 compile:

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/hsmade/OSM-ARDF/pkg/measurement"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"log"
 )
 
 type TimescaleDB struct {
@@ -31,6 +32,9 @@ func (d *TimescaleDB) Connect() error {
 }
 
 func (d *TimescaleDB) Add(m *measurement.Measurement) error {
+	if d.connectionPool == nil {
+		return errors.New("please connect to the database first")
+	}
 	conn, err := d.connectionPool.Acquire(context.Background())
 	if err != nil {
 		return err
@@ -38,13 +42,15 @@ func (d *TimescaleDB) Add(m *measurement.Measurement) error {
 
 	defer conn.Release()
 
-	result, err := conn.Exec(context.Background(), "insert into doppler(time, name,lon,lat, bearing) values(%s, %s, %s, %s) ",
+	query := fmt.Sprintf("insert into doppler(time, name, lon, lat, bearing) values(\"%s\", \"%s\", %f, %f, %f) ",
 		m.Timestamp,
 		m.Station,
 		m.Longitude,
 		m.Latitude,
 		m.Bearing,
-		)
+	)
+	log.Print(query)
+	result, err := conn.Exec(context.Background(), query)
 
 	if err != nil {
 		return err
