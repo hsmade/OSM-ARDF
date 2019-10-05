@@ -24,14 +24,14 @@ download:
 	@go mod download
 	@go mod verify
 
-test: #download lint
+test: download lint
 	$(eval CONTAINER = $(shell docker run -d -P -e POSTGRES_PASSWORD=postgres timescale/timescaledb-postgis:1.4.2-pg11))
 	$(eval PORT = $(shell docker inspect $(CONTAINER) | grep HostPort | grep -E -o [0-9]+))
 	@sleep 5
 	@POSTGRES_PORT=$(PORT) go test -v ./... || (docker kill ${CONTAINER};false)
 	@docker kill ${CONTAINER}
 
-build: test
+build:
 	@go build -ldflags="-w -s" -o dist/aprs_receiver ./cmd/aprs_receiver/aprs_receiver.go
 	@go build -ldflags="-w -s" -o dist/udp_receiver ./cmd/udp_receiver/udp_receiver.go
 	@go build -ldflags="-w -s" -o dist/udp_receiver ./cmd/stdin_receiver/stdin_receiver.go
