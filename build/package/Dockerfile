@@ -3,7 +3,7 @@ ADD . /go/src/github.com/hsmade/OSM-ARDF
 WORKDIR /go/src/github.com/hsmade/OSM-ARDF
 RUN adduser -D -g '' appuser
 RUN apk update && apk add --no-cache make git ca-certificates && update-ca-certificates
-RUN GOOS=linux GOARCH=amd64 make build
+RUN GOOS=linux GOARCH=amd64 make compile
 
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
