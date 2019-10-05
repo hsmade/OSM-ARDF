@@ -12,7 +12,7 @@ else
 TAG = "${VERSION}"
 endif
 
-package: test
+image: test
 	docker build -t ${IMAGE}:${TAG} -f build/package/Dockerfile .
 
 lint:
@@ -40,6 +40,6 @@ build: test
 clean:
 	go clean
 
-upload: package
+upload: image
 	docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
 	docker push ${IMAGE}:${TAG}
