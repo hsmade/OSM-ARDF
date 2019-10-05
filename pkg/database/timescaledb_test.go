@@ -46,10 +46,10 @@ func TestTimescaleDB_Connect(t *testing.T) {
 		t.Fatalf("failed to get port for postgresql instance running in docker: %e", err)
 	}
 	type fields struct {
-		Host     string
-		Port     uint16
-		Username string
-		Password string
+		Host         string
+		Port         uint16
+		Username     string
+		Password     string
 		DatabaseName string
 	}
 	tests := []struct {
@@ -60,10 +60,10 @@ func TestTimescaleDB_Connect(t *testing.T) {
 		{
 			name: "Happy path",
 			fields: fields{
-				Host:     "localhost",
-				Port:     uint16(dockerPort),
-				Username: "postgres",
-				Password: "postgres",
+				Host:         "localhost",
+				Port:         uint16(dockerPort),
+				Username:     "postgres",
+				Password:     "postgres",
 				DatabaseName: "postgres",
 			},
 			wantErr: false,
