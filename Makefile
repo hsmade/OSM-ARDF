@@ -12,7 +12,7 @@ else
 TAG = "${VERSION}"
 endif
 
-package: test
+image: test
 	docker build -t ${IMAGE}:${TAG} -f build/package/Dockerfile .
 
 lint:
@@ -31,7 +31,7 @@ test: download lint
 	@POSTGRES_PORT=$(PORT) go test -v ./... || (docker kill ${CONTAINER};false)
 	@docker kill ${CONTAINER}
 
-build:
+compile:
 	@go build -ldflags="-w -s" -o dist/aprs_receiver ./cmd/aprs_receiver/aprs_receiver.go
 	@go build -ldflags="-w -s" -o dist/udp_receiver ./cmd/udp_receiver/udp_receiver.go
 	@go build -ldflags="-w -s" -o dist/udp_receiver ./cmd/stdin_receiver/stdin_receiver.go
@@ -40,6 +40,6 @@ build:
 clean:
 	go clean
 
-upload: package
+upload: image
 	docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
 	docker push ${IMAGE}:${TAG}
