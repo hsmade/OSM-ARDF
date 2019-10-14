@@ -1,5 +1,5 @@
 IMAGE := hsmade/osm-ardf
-VERSION := $(shell git describe --tags)
+VERSION := $(shell git describe --tags 2>/dev/null)
 BUILD := $(shell git rev-parse --short HEAD)
 
 ifndef VERSION
@@ -20,16 +20,12 @@ lint:
 	go vet ./...
 
 download:
-	@go mod tidy
-	@go mod download
-	@go mod verify
+	go mod tidy
+	go mod download
+	go mod verify
 
 test: download lint
-	$(eval CONTAINER = $(shell docker run -d -P -e POSTGRES_PASSWORD=postgres timescale/timescaledb-postgis:1.4.2-pg11))
-	$(eval PORT = $(shell docker inspect $(CONTAINER) | grep HostPort | grep -E -o [0-9]+))
-	@sleep 5
-	@POSTGRES_PORT=$(PORT) go test -v ./... || (docker kill ${CONTAINER};false)
-	@docker kill ${CONTAINER}
+	go test -v ./...
 
 compile:
 	@go build -ldflags="-w -s" -o dist/aprs_receiver ./cmd/aprs_receiver/aprs_receiver.go

@@ -88,18 +88,18 @@ func TestReceiver_process(t *testing.T) {
 	}{
 		{
 			name: "happy flow",
-			data: "{\"timestamp\":\"2018-09-22T12:42:31Z\", \"station\":\"abc\", \"longitude\": 52.5, \"latitude\": 5.0, \"bearing\": 180.0}",
+			data: "{\"timestamp\":\"2018-09-22T12:42:31Z\", \"station\":\"abc\", \"longitude\": 52.5, \"latitude\": 5.0, \"bearing\": 180}",
 			result: measurement.Measurement{
 				Timestamp: validTIme,
 				Station:   "abc",
 				Longitude: 52.5,
 				Latitude:  5.0,
-				Bearing:   180.0,
+				Bearing:   180,
 			},
 		},
 		{
 			name:   "broken time",
-			data:   "{\"timestamp\":\"garbage\", \"station\":\"abc\", \"longitude\": 52.5, \"latitude\": 5.0, \"bearing\": 180.0}",
+			data:   "{\"timestamp\":\"garbage\", \"station\":\"abc\", \"longitude\": 52.5, \"latitude\": 5.0, \"bearing\": 180}",
 			result: measurement.Measurement{},
 		},
 		{

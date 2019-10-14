@@ -9,5 +9,5 @@ type Measurement struct {
 	Station   string
 	Longitude float32
 	Latitude  float32
-	Bearing   float32
+	Bearing   int
 }
