@@ -14,14 +14,16 @@ var (
 	dbPort     = flag.Uint("database-port", 5432, "TimescaleDB port")
 	dbUsername = flag.String("database-username", "postgres", "TimescaleDB username")
 	dbPassword = flag.String("database-password", "postgres", "TimescaleDB password")
+	dbDatabase = flag.String("database-name", "postgres", "TimescaleDB database name")
 )
 
 func main() {
 	receiver := stdin.Receiver{Database: &database.TimescaleDB{
-		Host:     *dbHost,
-		Port:     uint16(*dbPort),
-		Username: *dbUsername,
-		Password: *dbPassword,
+		Host:         *dbHost,
+		Port:         uint16(*dbPort),
+		Username:     *dbUsername,
+		Password:     *dbPassword,
+		DatabaseName: *dbDatabase,
 	}}
 
 	log.Fatal(receiver.Start(os.Stdin))

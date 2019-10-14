@@ -110,7 +110,7 @@ func TestReceiver_process(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db := &databaseMock{Test: t}
+			db := &databaseMock{Test: t, value: &measurement.Measurement{}}
 			r := &Receiver{Database: db}
 			r.process(tt.data)
 			if !reflect.DeepEqual(*db.value, tt.result) {

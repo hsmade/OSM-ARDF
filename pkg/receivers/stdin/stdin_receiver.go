@@ -35,10 +35,9 @@ func (r *Receiver) process(data string) {
 	err := json.Unmarshal([]byte(data), &m)
 	if err != nil {
 		log.WithError(err).Error("Failed to parse into measurement")
+		return
 	}
-
+	defer log.WithField("measurement", m).Trace("storing measurement").Stop(&err)
+	log.WithField("measurement", m).Debug("Storing measurement")
 	err = r.Database.Add(&m)
-	if err != nil {
-		log.WithError(err).Error("Failed to store measurement")
-	}
 }
