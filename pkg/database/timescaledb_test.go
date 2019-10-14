@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/hsmade/OSM-ARDF/pkg/measurement"
 	"github.com/jackc/pgx/v4"
-	_ "github.com/jackc/pgx/v4"
 	"github.com/ory/dockertest"
 	"log"
 	"os"
@@ -15,8 +14,12 @@ import (
 	"time"
 )
 
-var dbResource *dockertest.Resource
+var (
+	dbResource *dockertest.Resource
+	dockerPort int
+)
 
+// Setup a docker container with postgres before running the tests for databases
 func TestMain(m *testing.M) {
 	var db *pgx.Conn
 	var err error
@@ -65,6 +68,11 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
+	dockerPort, err = strconv.Atoi(dbResource.GetPort("5432/tcp"))
+	if err != nil {
+		log.Fatalf("Failed to get port for docker container: %e", err)
+	}
+
 	exit := m.Run()
 
 	err = pool.Purge(dbResource)
@@ -72,11 +80,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestTimescaleDB_Add(t *testing.T) {
-	dockerPort, err := strconv.Atoi(dbResource.GetPort("5432/tcp"))
-	if err != nil {
-		t.Fatalf("Failed to get port for docker container: %e", err)
-	}
-
 	testMeasurement := measurement.Measurement{
 		Timestamp: time.Now(),
 		Station:   "test",
@@ -137,11 +140,6 @@ func TestTimescaleDB_Add(t *testing.T) {
 }
 
 func TestTimescaleDB_Connect(t *testing.T) {
-	dockerPort, err := strconv.Atoi(dbResource.GetPort("5432/tcp"))
-	if err != nil {
-		t.Fatalf("Failed to get port for docker container: %e", err)
-	}
-
 	type fields struct {
 		Host         string
 		Port         uint16
