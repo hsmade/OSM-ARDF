@@ -1,5 +1,5 @@
 IMAGE := hsmade/osm-ardf
-VERSION := $(shell git describe --tags)
+VERSION := $(shell git describe --tags 2>/dev/null)
 BUILD := $(shell git rev-parse --short HEAD)
 
 ifndef VERSION
@@ -20,9 +20,9 @@ lint:
 	go vet ./...
 
 download:
-	@go mod tidy
-	@go mod download
-	@go mod verify
+	go mod tidy
+	go mod download
+	go mod verify
 
 test: download lint
 	$(eval CONTAINER := $(shell docker run -d -P -e POSTGRES_PASSWORD=postgres timescale/timescaledb-postgis:1.4.2-pg11))
@@ -34,7 +34,7 @@ test: download lint
 	@docker exec -ti -e PGPASSWORD=postgres $(CONTAINER) psql -U postgres -c "create table doppler (time TIMESTAMP not null default now(), name text not null, lat real not null, lon real not null, bearing INT);"
 	@docker exec -ti -e PGPASSWORD=postgres $(CONTAINER) psql -U postgres -c "SELECT create_hypertable('doppler', 'time', chunk_time_interval => interval '1 minute');"
 	@echo postgress: $(IP):$(PORT)
-	@POSTGRES_PORT=$(PORT) POSTGRES_IP=$(IP) go test -v ./... || (docker kill ${CONTAINER};false)
+	POSTGRES_PORT=$(PORT) POSTGRES_IP=$(IP) go test -v ./... || (docker kill ${CONTAINER};false)
 	@docker kill ${CONTAINER}
 
 compile:

@@ -42,15 +42,15 @@ func (d *TimescaleDB) Add(m *measurement.Measurement) error {
 
 	defer conn.Release()
 
-	query := fmt.Sprintf("insert into doppler(time, name, lon, lat, bearing) values(\"%s\", \"%s\", %f, %f, %f) ",
+	query := "insert into \"doppler\"(time, name, lon, lat, bearing) values($1, $2, $3, $4, $5)"
+	log.Print(query)
+	result, err := conn.Exec(context.Background(), query,
 		m.Timestamp,
 		m.Station,
 		m.Longitude,
 		m.Latitude,
 		m.Bearing,
 	)
-	log.Print(query)
-	result, err := conn.Exec(context.Background(), query)
 
 	if err != nil {
 		return err
