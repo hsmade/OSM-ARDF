@@ -31,6 +31,7 @@ compile:
 	go build -ldflags="-w -s" -o dist/aprs_receiver ./cmd/aprs_receiver/aprs_receiver.go
 	go build -ldflags="-w -s" -o dist/udp_receiver ./cmd/udp_receiver/udp_receiver.go
 	go build -ldflags="-w -s" -o dist/stdin_receiver ./cmd/stdin_receiver/stdin_receiver.go
+	go generate ./...
 	go build -ldflags="-w -s" -o dist/web_server ./cmd/web_server/web_server.go
 
 clean:
@@ -39,3 +40,6 @@ clean:
 upload: image
 	docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
 	docker push ${IMAGE}:${TAG}
+
+test_webserver:
+	go run -tags dev -ldflags="-w -s" ./cmd/web_server/web_server.go
