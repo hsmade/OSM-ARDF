@@ -2,6 +2,7 @@
 # This script produces test messages
 
 import math
+from datetime import datetime
 
 
 def calculate_bearing(a, b):
@@ -23,7 +24,13 @@ def calculate_bearing(a, b):
 
 
 def send_measurement(name, point, bearing):
-    print("{}:{}:{}:{}".format(name, point[0], point[1], int(bearing)))
+    print('{{"timestamp":"{timestamp}", "station":"{station}", "longitude": {lon}, "latitude": {lat}, "bearing": {bearing}}}'.format(
+        timestamp=datetime.utcnow().isoformat("T") + "Z",
+        station=name,
+        lon=point[0],
+        lat=point[1],
+        bearing=int(bearing))
+    )
 
 
 def main():
