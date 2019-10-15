@@ -3,6 +3,5 @@
 package web
 
 import (
-	_	"github.com/shurcooL/vfsgen"
-
+	_ "github.com/shurcooL/vfsgen"
 )
