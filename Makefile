@@ -16,8 +16,8 @@ image: test
 	docker build -t ${IMAGE}:${TAG} -f build/package/Dockerfile .
 
 lint:
-	go fmt ./...
-	go vet ./...
+	go fmt -tags dev ./...
+	go vet -tags dev ./...
 
 download:
 	go mod tidy
@@ -25,7 +25,7 @@ download:
 	go mod verify
 
 test: download lint
-	go test -v ./...
+	go test -tags dev -v ./...
 
 compile:
 	go build -ldflags="-w -s" -o dist/aprs_receiver ./cmd/aprs_receiver/aprs_receiver.go
