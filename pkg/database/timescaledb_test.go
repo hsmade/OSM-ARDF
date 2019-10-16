@@ -3,12 +3,14 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/hsmade/OSM-ARDF/pkg/measurement"
+	"github.com/hsmade/OSM-ARDF/pkg/datastructures"
 	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/ory/dockertest"
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -80,7 +82,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestTimescaleDB_Add(t *testing.T) {
-	testMeasurement := measurement.Measurement{
+	testMeasurement := datastructures.Measurement{
 		Timestamp: time.Now(),
 		Station:   "test",
 		Longitude: 1,
@@ -96,7 +98,7 @@ func TestTimescaleDB_Add(t *testing.T) {
 		DatabaseName string
 	}
 	type args struct {
-		m *measurement.Measurement
+		m *datastructures.Measurement
 	}
 	tests := []struct {
 		name    string
@@ -184,6 +186,116 @@ func TestTimescaleDB_Connect(t *testing.T) {
 			}
 			if err := d.Connect(); (err != nil) != tt.wantErr {
 				t.Errorf("Connect() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestNewTimescaleDB_HappyPath(t *testing.T) {
+	databaseURL := "postgresql://user:pass@host:1234/db?sslmode=disable"
+	db := New(databaseURL)
+	want := TimescaleDB{
+		Host:           "host",
+		Port:           1234,
+		Username:       "user",
+		Password:       "pass",
+		DatabaseName:   "db",
+		connectionPool: nil,
+	}
+
+	if !reflect.DeepEqual(&want, db) {
+		t.Errorf("invalid db object created. Wanted: %v, got: %v", want, *db)
+	}
+}
+
+func TestNewTimescaleDB_InvalidURL(t *testing.T) {
+	databaseURL := "someinnvalidurl"
+	db := New(databaseURL)
+
+	if db != nil {
+		t.Errorf("expected nil, got: %v", db)
+	}
+}
+
+func TestTimescaleDB_GetPositions(t *testing.T) {
+	now := time.Now().Truncate(time.Second)
+	testMeasurement := datastructures.Measurement{
+		Timestamp: now,
+		Station:   "test",
+		Longitude: 1,
+		Latitude:  2,
+		Bearing:   3,
+	}
+
+	type fields struct {
+		Host           string
+		Port           uint16
+		Username       string
+		Password       string
+		DatabaseName   string
+		connectionPool *pgxpool.Pool
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []*datastructures.Position
+	}{
+		{
+			name: "Happy path",
+			fields: fields{
+				Host:         "localhost",
+				Port:         uint16(dockerPort),
+				Username:     "postgres",
+				Password:     "postgres",
+				DatabaseName: "postgres",
+			},
+			want: []*datastructures.Position{{
+				Timestamp: now,
+				Station:   "test",
+				Longitude: 1,
+				Latitude:  2,
+			}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &TimescaleDB{
+				Host:           tt.fields.Host,
+				Port:           tt.fields.Port,
+				Username:       tt.fields.Username,
+				Password:       tt.fields.Password,
+				DatabaseName:   tt.fields.DatabaseName,
+				connectionPool: tt.fields.connectionPool,
+			}
+			err := d.Connect()
+			if err != nil {
+				t.Errorf("failed to connect to database: %e", err)
+				return
+			}
+
+			err = d.Add(&testMeasurement)
+			if err != nil {
+				t.Errorf("failed to insert test measurement: %e", err)
+				return
+			}
+
+			positions, err := d.GetPositions(1 * time.Minute)
+			if err != nil {
+				t.Errorf("failed to query for positions: %e", err)
+				return
+			}
+
+			for _, want := range tt.want {
+				found := false
+				for _, position := range positions {
+					if reflect.DeepEqual(position, want) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("could not find item %v in list %v", want, positions[0])
+				}
 			}
 		})
 	}

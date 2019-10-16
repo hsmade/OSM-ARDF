@@ -8,6 +8,9 @@ import (
 func (s *server) routes() {
 	s.router.StaticFS("/app", web.Assets)
 	s.router.GET("/", s.redirectRoot)
+	api := s.router.Group("api")
+	api.GET("/positions", s.handlePostions())
+
 }
 
 func (s *server) redirectRoot(c *gin.Context) {

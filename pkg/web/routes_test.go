@@ -8,12 +8,12 @@ import (
 )
 
 func TestRootRedirect(t *testing.T) {
-	is := is.New(t)
-	srv := NewServer()
+	Is := is.New(t)
+	srv := NewServer("postgresql://postgres:postgres@localhost:5432/postgres")
 	req, err := http.NewRequest("GET", "/", nil)
-	is.NoErr(err)
+	Is.NoErr(err)
 	w := httptest.NewRecorder()
 	srv.router.ServeHTTP(w, req)
-	is.Equal(w.Result().StatusCode, http.StatusMovedPermanently)
-	is.Equal(w.Header().Get("location"), "/app/")
+	Is.Equal(w.Result().StatusCode, http.StatusMovedPermanently)
+	Is.Equal(w.Header().Get("location"), "/app/")
 }

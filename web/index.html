@@ -14,11 +14,25 @@
 <script>
     let map = L.map('map'),
         positions = L.realtime({
-            url: 'http://localhost:8083/api/positions',
+            url: 'http://localhost:8083/api/positions?seconds=60',
             crossOrigin: true,
             type: 'json',
         }, {
-            interval: 100,
+            interval: 1000,
+        // }).addTo(map),
+        // headings = L.realtime({
+        //     url: 'http://localhost:8083/api/headings',
+        //     crossOrigin: true,
+        //     type: 'json',
+        // }, {
+        //     interval: 1000,
+        // }).addTo(map),
+        // crossings = L.realtime({
+        //     url: 'http://localhost:8083/api/crossings',
+        //     crossOrigin: true,
+        //     type: 'json',
+        // }, {
+        //     interval: 1000,
         }).addTo(map);
     map.setView([52.0582, 5.1669], 11);
 
@@ -26,9 +40,9 @@
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
 
-    positions.on('update', function() {
-        map.fitBounds(positions.getBounds(), {maxZoom: 12});
-    });
+    // positions.on('update', function() {
+    //     map.fitBounds(positions.getBounds(), {maxZoom: 12});
+    // });
 
 </script>
 </body>

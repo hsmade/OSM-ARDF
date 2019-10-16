@@ -3,6 +3,7 @@
 
 import math
 from datetime import datetime
+import time
 
 
 def calculate_bearing(a, b):
@@ -30,7 +31,9 @@ def send_measurement(name, point, bearing):
         lon=point[0],
         lat=point[1],
         bearing=int(bearing))
-    )
+    , flush=True)
+    time.sleep(0.1)
+
 
 
 def main():

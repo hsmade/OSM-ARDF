@@ -1,8 +1,8 @@
 FROM golang:1.13-alpine as builder
-ADD . /go/src/github.com/hsmade/OSM-ARDF
-WORKDIR /go/src/github.com/hsmade/OSM-ARDF
 RUN adduser -D -g '' appuser
 RUN apk update && apk add --no-cache make git ca-certificates && update-ca-certificates
+ADD . /go/src/github.com/hsmade/OSM-ARDF
+WORKDIR /go/src/github.com/hsmade/OSM-ARDF
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make compile
 
 FROM scratch

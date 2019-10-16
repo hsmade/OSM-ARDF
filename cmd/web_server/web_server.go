@@ -5,9 +5,10 @@ package main
 import (
 	"github.com/hsmade/OSM-ARDF/pkg/web"
 	"log"
+	"os"
 )
 
 func main() {
-	s := web.NewServer()
+	s := web.NewServer(os.Getenv("DATABASE"))
 	log.Fatal(s.Serve(":8083"))
 }
