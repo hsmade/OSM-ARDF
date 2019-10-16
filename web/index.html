@@ -13,8 +13,8 @@
 <div id="map" style="width: 1200px; height: 800px;"></div>
 <script>
     let map = L.map('map'),
-        realtime = L.realtime({
-            url: 'http://localhost:8083',
+        positions = L.realtime({
+            url: 'http://localhost:8083/api/positions',
             crossOrigin: true,
             type: 'json',
         }, {
@@ -26,8 +26,8 @@
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
 
-    realtime.on('update', function() {
-        map.fitBounds(realtime.getBounds(), {maxZoom: 12});
+    positions.on('update', function() {
+        map.fitBounds(positions.getBounds(), {maxZoom: 12});
     });
 
 </script>
