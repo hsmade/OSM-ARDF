@@ -79,7 +79,7 @@ func (d *TimescaleDB) Add(m *datastructures.Measurement) error {
 	defer conn.Release()
 
 	query := "insert into \"doppler\"(time, name, lon, lat, bearing) values($1, $2, $3, $4, $5)"
-	log.Infof("insert query: %s", query)
+	log.Debugf("insert query: %s", query)
 	result, err := conn.Exec(context.Background(), query,
 		m.Timestamp,
 		m.Station,
@@ -93,7 +93,7 @@ func (d *TimescaleDB) Add(m *datastructures.Measurement) error {
 	}
 
 	if result.RowsAffected() != 1 {
-		return errors.New(fmt.Sprintf("Insert result in %d amount of rows, instead of 1", result.RowsAffected()))
+		return errors.New(fmt.Sprintf("insert resulted in %d amount of rows, instead of 1", result.RowsAffected()))
 	}
 	return nil
 }
@@ -114,7 +114,7 @@ func (d *TimescaleDB) GetPositions(since time.Duration) (positions []*datastruct
 	defer conn.Release()
 
 	query := fmt.Sprintf("select date_trunc('second', time) as second, name, avg(lon), avg(lat) from doppler where time > NOW() - interval '%d seconds' group by second,name order by second, name", int(since.Seconds()))
-	log.Infof("get positions query: %s", query)
+	log.Debugf("get positions query: %s", query)
 	rows, err := conn.Query(context.Background(), query)
 
 	if err != nil {
@@ -144,7 +144,7 @@ func (d *TimescaleDB) GetPositions(since time.Duration) (positions []*datastruct
 			Latitude:  latitude,
 		}
 		positions = append(positions, &position)
-		log.Infof("got position: %v", position)
+		log.Debugf("got position: %v", position)
 	}
 	err = rows.Err()
 	return

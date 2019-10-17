@@ -1,9 +1,9 @@
 package web
 
 import (
+	"github.com/apex/log"
 	"github.com/gin-gonic/gin"
 	"github.com/hsmade/OSM-ARDF/pkg/database"
-	"log"
 	"net/http"
 )
 
@@ -19,6 +19,8 @@ func NewServer(databaseURL string) *server {
 	err := s.db.Connect()
 	if err != nil {
 		log.Fatalf("failed to connect to database: %e", err)
+	} else {
+		log.Info("connected to database")
 	}
 	return &s
 }
