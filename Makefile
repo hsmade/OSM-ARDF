@@ -26,7 +26,10 @@ download:
 	go mod verify
 
 test: download lint
-	go test -tags dev -v ./...
+	go test -tags dev -v -coverprofile=coverage.out ./...
+
+coverage: test
+	go tool cover -html=coverage.out
 
 compile:
 	go build -ldflags="-w -extldflags -s" -o dist/aprs_receiver ./cmd/aprs_receiver/aprs_receiver.go
