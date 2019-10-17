@@ -2,3 +2,4 @@
 deployments/data/
 dist/
 web/assets_vfsdata.go
+coverage.out
