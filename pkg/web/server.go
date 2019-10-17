@@ -3,8 +3,8 @@ package web
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/hsmade/OSM-ARDF/pkg/database"
-	"net/http"
 	"log"
+	"net/http"
 )
 
 type server struct {
@@ -18,7 +18,7 @@ func NewServer(databaseURL string) *server {
 	s.db = database.New(databaseURL)
 	err := s.db.Connect()
 	if err != nil {
-		log.Fatalf("failed to connect to database: %e",err)
+		log.Fatalf("failed to connect to database: %e", err)
 	}
 	return &s
 }

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/matryer/is"
 	"net/http"
 	"net/http/httptest"
@@ -9,7 +10,11 @@ import (
 
 func TestRootRedirect(t *testing.T) {
 	Is := is.New(t)
-	srv := NewServer("postgresql://postgres:postgres@localhost:5432/postgres")
+	srv := server{
+		router: gin.Default(),
+	}
+	srv.routes()
+
 	req, err := http.NewRequest("GET", "/", nil)
 	Is.NoErr(err)
 	w := httptest.NewRecorder()

@@ -30,7 +30,7 @@ func formatPositions(positions []*datastructures.Position) []byte { // FIXME han
 	fc := geojson.NewFeatureCollection()
 	for _, point := range positions {
 		pointFeature := geojson.NewPointFeature([]float64{point.Longitude, point.Latitude})
-		pointFeature.Properties = map[string] interface{}{"id": point.Station+point.Timestamp.String()}
+		pointFeature.Properties = map[string]interface{}{"id": point.Station + point.Timestamp.String()}
 		fc.AddFeature(pointFeature)
 	}
 	rawJSON, err := fc.MarshalJSON()

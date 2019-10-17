@@ -19,11 +19,11 @@ import (
 var (
 	dbResource *dockertest.Resource
 	dockerPort int
+	db         *pgx.Conn
 )
 
 // Setup a docker container with postgres before running the tests for databases
 func TestMain(m *testing.M) {
-	var db *pgx.Conn
 	var err error
 	pool, err := dockertest.NewPool("")
 	if err != nil {
@@ -82,13 +82,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestTimescaleDB_Add(t *testing.T) {
-	testMeasurement := datastructures.Measurement{
-		Timestamp: time.Now(),
-		Station:   "test",
-		Longitude: 1,
-		Latitude:  2,
-		Bearing:   3,
-	}
+	timeNow := time.Now().Truncate(time.Second)
 
 	type fields struct {
 		Host         string
@@ -97,28 +91,74 @@ func TestTimescaleDB_Add(t *testing.T) {
 		Password     string
 		DatabaseName string
 	}
+
 	type args struct {
 		m *datastructures.Measurement
 	}
+
+	testDBFields := fields{
+		Host:         "localhost",
+		Port:         uint16(dockerPort),
+		Username:     "postgres",
+		Password:     "postgres",
+		DatabaseName: "postgres",
+	}
+
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
+		want    args
 		wantErr bool
 	}{
 		{
 			"Happy path",
-			fields{
-				Host:         "localhost",
-				Port:         uint16(dockerPort),
-				Username:     "postgres",
-				Password:     "postgres",
-				DatabaseName: "postgres",
-			},
-			args{
-				&testMeasurement,
-			},
+			testDBFields,
+			args{&datastructures.Measurement{
+				Timestamp: timeNow,
+				Station:   "test_Add_happy_path",
+				Longitude: 1,
+				Latitude:  2,
+				Bearing:   3,
+			}},
+			args{&datastructures.Measurement{
+				Timestamp: timeNow,
+				Station:   "test_Add_happy_path",
+				Longitude: 1,
+				Latitude:  2,
+				Bearing:   3,
+			}},
 			false,
+		},
+		{
+			"negative bearing",
+			testDBFields,
+			args{&datastructures.Measurement{
+				Timestamp: timeNow,
+				Bearing:   -1,
+			}},
+			args{nil},
+			true,
+		},
+		{
+			"too high bearing",
+			testDBFields,
+			args{&datastructures.Measurement{
+				Timestamp: timeNow,
+				Bearing:   361,
+			}},
+			args{nil},
+			true,
+		},
+		{
+			"no station name",
+			testDBFields,
+			args{&datastructures.Measurement{
+				Timestamp: timeNow,
+				Station:   "",
+			}},
+			args{nil},
+			true,
 		},
 	}
 	for _, tt := range tests {
@@ -137,6 +177,21 @@ func TestTimescaleDB_Add(t *testing.T) {
 			if err := d.Add(tt.args.m); (err != nil) != tt.wantErr {
 				t.Errorf("Add() error = %v, wantErr %v", err, tt.wantErr)
 			}
+
+			if err != nil {
+				query := fmt.Sprintf("SELECT time, name, lon, lat, bearing FROM doppler WHERE name = '%s'", tt.want.m.Station)
+				row := db.QueryRow(context.Background(), query)
+
+				var got datastructures.Measurement
+				err = row.Scan(&got.Timestamp, &got.Station, &got.Longitude, &got.Latitude, &got.Bearing)
+				if err != nil {
+					t.Fatalf("failed to parse row: %e", err)
+				}
+
+				if !reflect.DeepEqual(*tt.want.m, got) {
+					t.Errorf("Measurement changed during storage: %v, got: %v", *tt.want.m, got)
+				}
+			}
 		})
 	}
 }
@@ -149,20 +204,23 @@ func TestTimescaleDB_Connect(t *testing.T) {
 		Password     string
 		DatabaseName string
 	}
+
+	testDBFields := fields{
+		Host:         "localhost",
+		Port:         uint16(dockerPort),
+		Username:     "postgres",
+		Password:     "postgres",
+		DatabaseName: "postgres",
+	}
+
 	tests := []struct {
 		name    string
 		fields  fields
 		wantErr bool
 	}{
 		{
-			name: "Happy path",
-			fields: fields{
-				Host:         "localhost",
-				Port:         uint16(dockerPort),
-				Username:     "postgres",
-				Password:     "postgres",
-				DatabaseName: "postgres",
-			},
+			name:    "Happy path",
+			fields:  testDBFields,
 			wantErr: false,
 		},
 		{
@@ -235,26 +293,57 @@ func TestTimescaleDB_GetPositions(t *testing.T) {
 		DatabaseName   string
 		connectionPool *pgxpool.Pool
 	}
+
+	testDBFields := fields{
+		Host:         "localhost",
+		Port:         uint16(dockerPort),
+		Username:     "postgres",
+		Password:     "postgres",
+		DatabaseName: "postgres",
+	}
+
 	tests := []struct {
 		name   string
 		fields fields
+		input  []*datastructures.Measurement
 		want   []*datastructures.Position
 	}{
 		{
-			name: "Happy path",
-			fields: fields{
-				Host:         "localhost",
-				Port:         uint16(dockerPort),
-				Username:     "postgres",
-				Password:     "postgres",
-				DatabaseName: "postgres",
-			},
+			name:   "single measurement",
+			fields: testDBFields,
+			input:  []*datastructures.Measurement{&testMeasurement},
 			want: []*datastructures.Position{{
 				Timestamp: now,
 				Station:   "test",
 				Longitude: 1,
 				Latitude:  2,
 			}},
+		},
+		{
+			name:   "two measurements",
+			fields: testDBFields,
+			input: []*datastructures.Measurement{
+				{
+					Timestamp: now,
+					Station:   "test1",
+					Bearing:   1,
+				},
+				{
+					Timestamp: now,
+					Station:   "test2",
+					Bearing:   1,
+				},
+			},
+			want: []*datastructures.Position{
+				{
+					Timestamp: now,
+					Station:   "test1",
+				},
+				{
+					Timestamp: now,
+					Station:   "test2",
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -269,20 +358,19 @@ func TestTimescaleDB_GetPositions(t *testing.T) {
 			}
 			err := d.Connect()
 			if err != nil {
-				t.Errorf("failed to connect to database: %e", err)
-				return
+				t.Fatalf("failed to connect to database: %e", err)
 			}
 
-			err = d.Add(&testMeasurement)
-			if err != nil {
-				t.Errorf("failed to insert test measurement: %e", err)
-				return
+			for _, measurement := range tt.input {
+				err = d.Add(measurement)
+				if err != nil {
+					t.Fatalf("failed to insert test measurement: %e", err)
+				}
 			}
 
 			positions, err := d.GetPositions(1 * time.Minute)
 			if err != nil {
-				t.Errorf("failed to query for positions: %e", err)
-				return
+				t.Fatalf("failed to query for positions: %e", err)
 			}
 
 			for _, want := range tt.want {

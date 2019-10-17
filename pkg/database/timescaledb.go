@@ -60,6 +60,14 @@ func (d *TimescaleDB) Connect() error {
 }
 
 func (d *TimescaleDB) Add(m *datastructures.Measurement) error {
+	if m.Bearing > 360 || m.Bearing < 0 {
+		return errors.New("bearing must be 0 - 360")
+	}
+
+	if m.Station == "" {
+		return errors.New("missing station name")
+	}
+
 	if d.connectionPool == nil {
 		return errors.New("please connect to the database first")
 	}
