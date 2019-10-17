@@ -1,12 +1,12 @@
 package database
 
 import (
-	"github.com/hsmade/OSM-ARDF/pkg/datastructures"
+	"github.com/hsmade/OSM-ARDF/pkg/types"
 	"time"
 )
 
 type Database interface {
 	Connect() error
-	Add(m *datastructures.Measurement) error
-	GetPositions(since time.Duration) ([]*datastructures.Position, error)
+	Add(m *types.Measurement) error
+	GetPositions(since time.Duration) ([]*types.Position, error)
 }

@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/hsmade/OSM-ARDF/pkg/datastructures"
+	"github.com/hsmade/OSM-ARDF/pkg/types"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/ory/dockertest"
@@ -93,7 +93,7 @@ func TestTimescaleDB_Add(t *testing.T) {
 	}
 
 	type args struct {
-		m *datastructures.Measurement
+		m *types.Measurement
 	}
 
 	testDBFields := fields{
@@ -114,14 +114,14 @@ func TestTimescaleDB_Add(t *testing.T) {
 		{
 			"Happy path",
 			testDBFields,
-			args{&datastructures.Measurement{
+			args{&types.Measurement{
 				Timestamp: timeNow,
 				Station:   "test_Add_happy_path",
 				Longitude: 1,
 				Latitude:  2,
 				Bearing:   3,
 			}},
-			args{&datastructures.Measurement{
+			args{&types.Measurement{
 				Timestamp: timeNow,
 				Station:   "test_Add_happy_path",
 				Longitude: 1,
@@ -133,7 +133,7 @@ func TestTimescaleDB_Add(t *testing.T) {
 		{
 			"negative bearing",
 			testDBFields,
-			args{&datastructures.Measurement{
+			args{&types.Measurement{
 				Timestamp: timeNow,
 				Bearing:   -1,
 			}},
@@ -143,7 +143,7 @@ func TestTimescaleDB_Add(t *testing.T) {
 		{
 			"too high bearing",
 			testDBFields,
-			args{&datastructures.Measurement{
+			args{&types.Measurement{
 				Timestamp: timeNow,
 				Bearing:   361,
 			}},
@@ -153,7 +153,7 @@ func TestTimescaleDB_Add(t *testing.T) {
 		{
 			"no station name",
 			testDBFields,
-			args{&datastructures.Measurement{
+			args{&types.Measurement{
 				Timestamp: timeNow,
 				Station:   "",
 			}},
@@ -182,7 +182,7 @@ func TestTimescaleDB_Add(t *testing.T) {
 				query := fmt.Sprintf("SELECT time, name, lon, lat, bearing FROM doppler WHERE name = '%s'", tt.want.m.Station)
 				row := db.QueryRow(context.Background(), query)
 
-				var got datastructures.Measurement
+				var got types.Measurement
 				err = row.Scan(&got.Timestamp, &got.Station, &got.Longitude, &got.Latitude, &got.Bearing)
 				if err != nil {
 					t.Fatalf("failed to parse row: %e", err)
@@ -277,7 +277,7 @@ func TestNewTimescaleDB_InvalidURL(t *testing.T) {
 
 func TestTimescaleDB_GetPositions(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
-	testMeasurement := datastructures.Measurement{
+	testMeasurement := types.Measurement{
 		Timestamp: now,
 		Station:   "test",
 		Longitude: 1,
@@ -305,14 +305,14 @@ func TestTimescaleDB_GetPositions(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		input  []*datastructures.Measurement
-		want   []*datastructures.Position
+		input  []*types.Measurement
+		want   []*types.Position
 	}{
 		{
 			name:   "single measurement",
 			fields: testDBFields,
-			input:  []*datastructures.Measurement{&testMeasurement},
-			want: []*datastructures.Position{{
+			input:  []*types.Measurement{&testMeasurement},
+			want: []*types.Position{{
 				Timestamp: now,
 				Station:   "test",
 				Longitude: 1,
@@ -322,7 +322,7 @@ func TestTimescaleDB_GetPositions(t *testing.T) {
 		{
 			name:   "two measurements",
 			fields: testDBFields,
-			input: []*datastructures.Measurement{
+			input: []*types.Measurement{
 				{
 					Timestamp: now,
 					Station:   "test1",
@@ -334,7 +334,7 @@ func TestTimescaleDB_GetPositions(t *testing.T) {
 					Bearing:   1,
 				},
 			},
-			want: []*datastructures.Position{
+			want: []*types.Position{
 				{
 					Timestamp: now,
 					Station:   "test1",

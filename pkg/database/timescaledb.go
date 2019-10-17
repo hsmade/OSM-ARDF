@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/apex/log"
-	"github.com/hsmade/OSM-ARDF/pkg/datastructures"
+	"github.com/hsmade/OSM-ARDF/pkg/types"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/xo/dburl"
 	"strconv"
@@ -59,7 +59,7 @@ func (d *TimescaleDB) Connect() error {
 	return err
 }
 
-func (d *TimescaleDB) Add(m *datastructures.Measurement) error {
+func (d *TimescaleDB) Add(m *types.Measurement) error {
 	if m.Bearing > 360 || m.Bearing < 0 {
 		return errors.New("bearing must be 0 - 360")
 	}
@@ -98,7 +98,7 @@ func (d *TimescaleDB) Add(m *datastructures.Measurement) error {
 	return nil
 }
 
-func (d *TimescaleDB) GetPositions(since time.Duration) (positions []*datastructures.Position, err error) {
+func (d *TimescaleDB) GetPositions(since time.Duration) (positions []*types.Position, err error) {
 	if since.Seconds() < 1 {
 		return nil, errors.New("since should be >= 1")
 	}
@@ -137,7 +137,7 @@ func (d *TimescaleDB) GetPositions(since time.Duration) (positions []*datastruct
 			return nil, err
 		}
 
-		position := datastructures.Position{
+		position := types.Position{
 			Timestamp: datetime,
 			Station:   name,
 			Longitude: longitude,

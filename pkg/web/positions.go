@@ -3,7 +3,7 @@ package web
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/hsmade/OSM-ARDF/pkg/datastructures"
+	"github.com/hsmade/OSM-ARDF/pkg/types"
 	"github.com/paulmach/go.geojson"
 	"log"
 	"strconv"
@@ -26,7 +26,7 @@ func (s *server) handlePostions() gin.HandlerFunc {
 	}
 }
 
-func formatPositions(positions []*datastructures.Position) []byte { // FIXME handle error
+func formatPositions(positions []*types.Position) []byte { // FIXME handle error
 	fc := geojson.NewFeatureCollection()
 	for _, point := range positions {
 		pointFeature := geojson.NewPointFeature([]float64{point.Longitude, point.Latitude})

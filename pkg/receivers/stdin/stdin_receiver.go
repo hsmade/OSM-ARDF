@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/apex/log"
 	"github.com/hsmade/OSM-ARDF/pkg/database"
-	"github.com/hsmade/OSM-ARDF/pkg/datastructures"
+	"github.com/hsmade/OSM-ARDF/pkg/types"
 	"io"
 )
 
@@ -31,7 +31,7 @@ func (r *Receiver) Start(reader io.Reader) error {
 }
 
 func (r *Receiver) process(data string) {
-	m := datastructures.Measurement{}
+	m := types.Measurement{}
 	err := json.Unmarshal([]byte(data), &m)
 	if err != nil {
 		log.WithError(err).Error("Failed to parse into measurement")
