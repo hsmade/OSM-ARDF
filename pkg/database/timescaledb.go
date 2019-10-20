@@ -80,6 +80,9 @@ func (d *TimescaleDB) Add(m *types.Measurement) error {
 
 	defer conn.Release()
 
+	// TODO NEXT: calculate the line and add it as a linestring `orb.LineString{}`, replacing the point column.
+	// INTERSECTION: select ST_AsText(ST_Intersection(a.line, b.line)), count(a.name) from doppler as a, doppler as b where ST_Intersects(a.line, b.line) and a.name < b.name group by ST_Intersection(a.line, b.line);
+
 	query := "insert into \"doppler\"(time, name, point, bearing) values($1, $2, ST_GeomFromWKB($3), $4)"
 	log.Debugf("insert query: %s", query)
 	result, err := conn.Exec(context.Background(), query,
