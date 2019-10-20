@@ -21,6 +21,7 @@ require (
 	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/ory/dockertest v3.3.5+incompatible
 	github.com/paulmach/go.geojson v1.4.0
+	github.com/paulmach/orb v0.1.5
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/xo/dburl v0.0.0-20191005012637-293c3298d6c0

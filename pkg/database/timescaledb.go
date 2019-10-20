@@ -7,6 +7,8 @@ import (
 	"github.com/apex/log"
 	"github.com/hsmade/OSM-ARDF/pkg/types"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/encoding/wkb"
 	"github.com/xo/dburl"
 	"strconv"
 	"strings"
@@ -78,13 +80,12 @@ func (d *TimescaleDB) Add(m *types.Measurement) error {
 
 	defer conn.Release()
 
-	query := "insert into \"doppler\"(time, name, lon, lat, bearing) values($1, $2, $3, $4, $5)"
+	query := "insert into \"doppler\"(time, name, point, bearing) values($1, $2, ST_GeomFromWKB($3), $4)"
 	log.Debugf("insert query: %s", query)
 	result, err := conn.Exec(context.Background(), query,
 		m.Timestamp,
 		m.Station,
-		m.Longitude,
-		m.Latitude,
+		wkb.Value(orb.Point{m.Longitude, m.Latitude}),
 		m.Bearing,
 	)
 
@@ -113,7 +114,8 @@ func (d *TimescaleDB) GetPositions(since time.Duration) (positions []*types.Posi
 
 	defer conn.Release()
 
-	query := fmt.Sprintf("select date_trunc('second', time) as second, name, avg(lon), avg(lat) from doppler where time > NOW() - interval '%d seconds' group by second,name order by second, name", int(since.Seconds()))
+	// get average / center point
+	query := fmt.Sprintf("select date_trunc('second', time) as second, name, ST_AsBinary(st_centroid(st_union(point))) from doppler where time > NOW() - interval '%d seconds' group by second,name order by second, name", int(since.Seconds()))
 	log.Debugf("get positions query: %s", query)
 	rows, err := conn.Query(context.Background(), query)
 
@@ -125,13 +127,12 @@ func (d *TimescaleDB) GetPositions(since time.Duration) (positions []*types.Posi
 
 	for rows.Next() {
 		var (
-			datetime  time.Time
-			name      string
-			longitude float64
-			latitude  float64
+			datetime time.Time
+			name     string
+			point    orb.Point
 		)
 
-		err := rows.Scan(&datetime, &name, &longitude, &latitude)
+		err := rows.Scan(&datetime, &name, wkb.Scanner(&point))
 		if err != nil {
 			log.Errorf("failed to get row: %e", err)
 			return nil, err
@@ -140,8 +141,8 @@ func (d *TimescaleDB) GetPositions(since time.Duration) (positions []*types.Posi
 		position := types.Position{
 			Timestamp: datetime,
 			Station:   name,
-			Longitude: longitude,
-			Latitude:  latitude,
+			Longitude: point.X(),
+			Latitude:  point.Y(),
 		}
 		positions = append(positions, &position)
 		log.Debugf("got position: %v", position)

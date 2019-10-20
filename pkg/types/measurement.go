@@ -7,7 +7,7 @@ import (
 type Measurement struct {
 	Timestamp time.Time
 	Station   string
-	Longitude float32
-	Latitude  float32
+	Longitude float64
+	Latitude  float64
 	Bearing   int
 }

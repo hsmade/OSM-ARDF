@@ -7,6 +7,8 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/ory/dockertest"
+	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/encoding/wkb"
 	"log"
 	"os"
 	"path/filepath"
@@ -174,16 +176,21 @@ func TestTimescaleDB_Add(t *testing.T) {
 			if err != nil {
 				t.Errorf("Failed during Connect(): %e", err)
 			}
-			if err := d.Add(tt.args.m); (err != nil) != tt.wantErr {
+
+			err = d.Add(tt.args.m)
+			if (err != nil) != tt.wantErr {
 				t.Errorf("Add() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			if err != nil {
-				query := fmt.Sprintf("SELECT time, name, lon, lat, bearing FROM doppler WHERE name = '%s'", tt.want.m.Station)
+			if err == nil {
+				query := fmt.Sprintf("SELECT time, name, ST_AsBinary(point), bearing FROM doppler WHERE name = '%s'", tt.want.m.Station)
 				row := db.QueryRow(context.Background(), query)
 
 				var got types.Measurement
-				err = row.Scan(&got.Timestamp, &got.Station, &got.Longitude, &got.Latitude, &got.Bearing)
+				var point orb.Point
+				err = row.Scan(&got.Timestamp, &got.Station, wkb.Scanner(&point), &got.Bearing)
+				got.Longitude = point.X()
+				got.Latitude = point.Y()
 				if err != nil {
 					t.Fatalf("failed to parse row: %e", err)
 				}
