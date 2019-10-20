@@ -35,7 +35,6 @@ def send_measurement(name, point, bearing):
     time.sleep(0.1)
 
 
-
 def main():
     car1 = [[float(item.split(',')[0]), float(item.split(',')[1])] for item in open("car1.coordinates").readlines()]
     car2 = [[float(item.split(',')[0]), float(item.split(',')[1])] for item in open("car2.coordinates").readlines()]
