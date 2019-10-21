@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 		log.Fatal(err)
 	}
 
-	initScript, err := filepath.Abs(dir + "../../../scripts/init-gis.sh")
+	initSql, err := filepath.Abs(dir + "../../../scripts/init-gis.sql")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestMain(m *testing.M) {
 		Repository: "timescale/timescaledb-postgis",
 		Tag:        "1.4.2-pg11",
 		Env:        []string{"POSTGRES_PASSWORD=postgres"},
-		Mounts:     []string{initScript + ":/docker-entrypoint-initdb.d/init-gis.sh"},
+		Mounts:     []string{initSql + ":/docker-entrypoint-initdb.d/init-gis.sql"},
 	}
 	dbResource, err = pool.RunWithOptions(options)
 	if err != nil {

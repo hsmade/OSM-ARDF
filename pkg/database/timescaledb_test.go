@@ -445,7 +445,7 @@ func TestTimescaleDB_GetLines(t *testing.T) {
 					Latitude:  2,
 				},
 				LongitudeEnd: 1.0000000000000395,
-				LatitudeEnd: 1.910067839408127,
+				LatitudeEnd:  1.910067839408127,
 			}},
 		},
 		{
@@ -470,7 +470,7 @@ func TestTimescaleDB_GetLines(t *testing.T) {
 						Station:   "test1",
 					},
 					LongitudeEnd: 0.0015695339070129915,
-					LatitudeEnd: 0.08991846347697284,
+					LatitudeEnd:  0.08991846347697284,
 				},
 				{
 					Position: types.Position{
@@ -478,7 +478,7 @@ func TestTimescaleDB_GetLines(t *testing.T) {
 						Station:   "test2",
 					},
 					LongitudeEnd: 0.0031385897164049313,
-					LatitudeEnd:0.08987737630457687,
+					LatitudeEnd:  0.08987737630457687,
 				},
 			},
 		},

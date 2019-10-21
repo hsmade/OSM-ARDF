@@ -1,1 +1,1 @@
-../deployments/timescaledb_init/init-gis.sql
+../deployments/init-gis.sql
