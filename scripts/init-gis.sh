@@ -1,1 +1,0 @@
-../deployments/timescaledb_init/init-gis.sh

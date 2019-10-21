@@ -12,13 +12,10 @@ services:
     image: timescale/timescaledb-postgis:1.4.2-pg11
     environment:
       POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./init-gis.sql:/docker-entrypoint-initdb.d/init-gis.sql
     ports:
       - "5432:5432"
-
-  timescaledb_init:
-    build: timescaledb_init
-    environment:
-      POSTGRES_PASSWORD: postgres
 
   aprs_receiver:
     build:
