@@ -83,7 +83,7 @@ func (d *TimescaleDB) Add(m *types.Measurement) error {
 	// TODO NEXT: calculate the line and add it as a linestring `orb.LineString{}`, replacing the point column.
 	// INTERSECTION: select ST_AsText(ST_Intersection(a.line, b.line)), count(a.name) from doppler as a, doppler as b where ST_Intersects(a.line, b.line) and a.name < b.name group by ST_Intersection(a.line, b.line);
 
-	query := "insert into \"doppler\"(time, name, point, bearing) values($1, $2, ST_GeomFromWKB($3), $4)"
+	query := "insert into \"doppler\"(time, station, point, bearing) values($1, $2, ST_GeomFromWKB($3), $4)"
 	log.Debugf("insert query: %s", query)
 	result, err := conn.Exec(context.Background(), query,
 		m.Timestamp,
@@ -118,7 +118,7 @@ func (d *TimescaleDB) GetPositions(since time.Duration) (positions []*types.Posi
 	defer conn.Release()
 
 	// get average / center point
-	query := fmt.Sprintf("select date_trunc('second', time) as second, name, ST_AsBinary(st_centroid(st_union(point))) from doppler where time > NOW() - interval '%d seconds' group by second,name order by second, name", int(since.Seconds()))
+	query := fmt.Sprintf("select date_trunc('second', time) as second, station, ST_AsBinary(st_centroid(st_union(point))) from doppler where time > NOW() - interval '%d seconds' group by second,station order by second, station", int(since.Seconds()))
 	log.Debugf("get positions query: %s", query)
 	rows, err := conn.Query(context.Background(), query)
 
@@ -131,11 +131,11 @@ func (d *TimescaleDB) GetPositions(since time.Duration) (positions []*types.Posi
 	for rows.Next() {
 		var (
 			datetime time.Time
-			name     string
+			station  string
 			point    orb.Point
 		)
 
-		err := rows.Scan(&datetime, &name, wkb.Scanner(&point))
+		err := rows.Scan(&datetime, &station, wkb.Scanner(&point))
 		if err != nil {
 			log.Errorf("failed to get row: %e", err)
 			return nil, err
@@ -143,7 +143,7 @@ func (d *TimescaleDB) GetPositions(since time.Duration) (positions []*types.Posi
 
 		position := types.Position{
 			Timestamp: datetime,
-			Station:   name,
+			Station:   station,
 			Longitude: point.X(),
 			Latitude:  point.Y(),
 		}

@@ -183,7 +183,7 @@ func TestTimescaleDB_Add(t *testing.T) {
 			}
 
 			if err == nil {
-				query := fmt.Sprintf("SELECT time, name, ST_AsBinary(point), bearing FROM doppler WHERE name = '%s'", tt.want.m.Station)
+				query := fmt.Sprintf("SELECT time, station, ST_AsBinary(point), bearing FROM doppler WHERE station = '%s'", tt.want.m.Station)
 				row := db.QueryRow(context.Background(), query)
 
 				var got types.Measurement
