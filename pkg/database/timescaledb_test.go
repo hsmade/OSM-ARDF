@@ -37,7 +37,7 @@ func TestMain(m *testing.M) {
 		log.Fatal(err)
 	}
 
-	initScript, err := filepath.Abs(dir + "../../../scripts/init-gis.sh")
+	initSql, err := filepath.Abs(dir + "../../../scripts/init-gis.sql")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 		Repository: "timescale/timescaledb-postgis",
 		Tag:        "1.4.2-pg11",
 		Env:        []string{"POSTGRES_PASSWORD=postgres"},
-		Mounts:     []string{initScript + ":/docker-entrypoint-initdb.d/init-gis.sh"},
+		Mounts:     []string{initSql + ":/docker-entrypoint-initdb.d/init-gis.sql"},
 	}
 	dbResource, err = pool.RunWithOptions(options)
 	if err != nil {
@@ -183,12 +183,17 @@ func TestTimescaleDB_Add(t *testing.T) {
 			}
 
 			if err == nil {
-				query := fmt.Sprintf("SELECT time, station, ST_AsBinary(point), bearing FROM doppler WHERE station = '%s'", tt.want.m.Station)
+				query := fmt.Sprintf("SELECT time, station, ST_AsBinary(point), ST_AsBinary(line), bearing FROM doppler WHERE station = '%s'", tt.want.m.Station)
 				row := db.QueryRow(context.Background(), query)
 
 				var got types.Measurement
 				var point orb.Point
-				err = row.Scan(&got.Timestamp, &got.Station, wkb.Scanner(&point), &got.Bearing)
+				var line orb.LineString
+				err = row.Scan(&got.Timestamp, &got.Station, wkb.Scanner(&point), wkb.Scanner(&line), &got.Bearing)
+
+				if point.X() != line[0].X() || point.Y() != line[0].Y() {
+					t.Errorf("start of line: %v doesn't match point: %v", line[0], point)
+				}
 				got.Longitude = point.X()
 				got.Latitude = point.Y()
 				if err != nil {
@@ -390,6 +395,131 @@ func TestTimescaleDB_GetPositions(t *testing.T) {
 				}
 				if !found {
 					t.Errorf("could not find item %v in list %v", want, positions[0])
+				}
+			}
+		})
+	}
+}
+func TestTimescaleDB_GetLines(t *testing.T) {
+	now := time.Now().Truncate(time.Second)
+	testMeasurement := types.Measurement{
+		Timestamp: now,
+		Station:   "test",
+		Longitude: 1,
+		Latitude:  2,
+		Bearing:   180,
+	}
+
+	type fields struct {
+		Host           string
+		Port           uint16
+		Username       string
+		Password       string
+		DatabaseName   string
+		connectionPool *pgxpool.Pool
+	}
+
+	testDBFields := fields{
+		Host:         "localhost",
+		Port:         uint16(dockerPort),
+		Username:     "postgres",
+		Password:     "postgres",
+		DatabaseName: "postgres",
+	}
+
+	tests := []struct {
+		name   string
+		fields fields
+		input  []*types.Measurement
+		want   []*types.Line
+	}{
+		{
+			name:   "single measurement",
+			fields: testDBFields,
+			input:  []*types.Measurement{&testMeasurement},
+			want: []*types.Line{{
+				Position: types.Position{
+					Timestamp: now,
+					Station:   "test",
+					Longitude: 1,
+					Latitude:  2,
+				},
+				LongitudeEnd: 1.0000000000000395,
+				LatitudeEnd: 1.910067839408127,
+			}},
+		},
+		{
+			name:   "two measurements",
+			fields: testDBFields,
+			input: []*types.Measurement{
+				{
+					Timestamp: now,
+					Station:   "test1",
+					Bearing:   1,
+				},
+				{
+					Timestamp: now,
+					Station:   "test2",
+					Bearing:   2,
+				},
+			},
+			want: []*types.Line{
+				{
+					Position: types.Position{
+						Timestamp: now,
+						Station:   "test1",
+					},
+					LongitudeEnd: 0.0015695339070129915,
+					LatitudeEnd: 0.08991846347697284,
+				},
+				{
+					Position: types.Position{
+						Timestamp: now,
+						Station:   "test2",
+					},
+					LongitudeEnd: 0.0031385897164049313,
+					LatitudeEnd:0.08987737630457687,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &TimescaleDB{
+				Host:           tt.fields.Host,
+				Port:           tt.fields.Port,
+				Username:       tt.fields.Username,
+				Password:       tt.fields.Password,
+				DatabaseName:   tt.fields.DatabaseName,
+				connectionPool: tt.fields.connectionPool,
+			}
+			err := d.Connect()
+			if err != nil {
+				t.Fatalf("failed to connect to database: %e", err)
+			}
+
+			for _, measurement := range tt.input {
+				err = d.Add(measurement)
+				if err != nil {
+					t.Fatalf("failed to insert test measurement: %e", err)
+				}
+			}
+
+			lines, err := d.GetLines(1 * time.Minute)
+			if err != nil {
+				t.Fatalf("failed to query for lines: %e", err)
+			}
+
+			for _, want := range tt.want {
+				found := false
+				for _, line := range lines {
+					if reflect.DeepEqual(line, want) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("could not find item %v in list %v", want, lines[0])
 				}
 			}
 		})

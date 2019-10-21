@@ -30,16 +30,16 @@
             pointToLayer: function (feature, latlng) {
                 return L.circleMarker(latlng, geojsonPointOptions);
             }
-        // }).addTo(map),
-        // headings = L.realtime({
-        //     url: 'http://localhost:8083/api/headings',
-        //     crossOrigin: true,
-        //     type: 'json',
-        // }, {
-        //     interval: 1000,
+        }).addTo(map),
+        headings = L.realtime({
+            url: 'http://localhost:8083/api/headings?seconds=60',
+            crossOrigin: true,
+            type: 'json',
+        }, {
+            interval: 1000,
         // }).addTo(map),
         // crossings = L.realtime({
-        //     url: 'http://localhost:8083/api/crossings',
+        //     url: 'http://localhost:8083/api/crossings?seconds=60',
         //     crossOrigin: true,
         //     type: 'json',
         // }, {

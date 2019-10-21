@@ -9,4 +9,5 @@ type Database interface {
 	Connect() error
 	Add(m *types.Measurement) error
 	GetPositions(since time.Duration) ([]*types.Position, error)
+	GetLines(since time.Duration) ([]*types.Line, error)
 }

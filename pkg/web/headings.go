@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func (s *server) handlePostions() gin.HandlerFunc {
+func (s *server) handleHeadings() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		seconds := c.Query("seconds")
 		since, err := strconv.Atoi(seconds)
@@ -19,21 +19,21 @@ func (s *server) handlePostions() gin.HandlerFunc {
 			_ = c.AbortWithError(500, errors.New("seconds must be a number"))
 			return
 		}
-		positions, err := s.db.GetPositions(time.Duration(since) * time.Second)
+		lines, err := s.db.GetLines(time.Duration(since) * time.Second)
 		if err != nil {
-			_ = c.AbortWithError(500, errors.New(fmt.Sprintf("unable to get positions: %e", err)))
+			_ = c.AbortWithError(500, errors.New(fmt.Sprintf("unable to get lines: %e", err)))
 			return
 		}
-		log.Printf("got %d positions", len(positions))
-		c.String(200, string(formatPositions(positions)))
+		log.Printf("got %d lines", len(lines))
+		c.String(200, string(formatHeadings(lines)))
 	}
 }
 
-func formatPositions(positions []*types.Position) []byte {
+func formatHeadings(lines []*types.Line) []byte {
 	fc := geojson.NewFeatureCollection()
-	for _, point := range positions {
-		pointFeature := geojson.NewPointFeature([]float64{point.Longitude, point.Latitude})
-		pointFeature.Properties = map[string]interface{}{"id": point.Station + point.Timestamp.String()}
+	for _, line := range lines {
+		pointFeature := geojson.NewLineStringFeature([][]float64{{line.Longitude, line.Latitude}, {line.LongitudeEnd, line.LatitudeEnd}})
+		pointFeature.Properties = map[string]interface{}{"id": line.Station + line.Timestamp.String()}
 		fc.AddFeature(pointFeature)
 	}
 	rawJSON, err := fc.MarshalJSON()

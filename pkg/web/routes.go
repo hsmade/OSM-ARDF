@@ -12,6 +12,7 @@ func (s *server) routes() {
 	s.router.GET("/", s.redirectRoot)
 	api := s.router.Group("api")
 	api.GET("/positions", s.handlePostions())
+	api.GET("/headings", s.handleHeadings())
 
 }
 
