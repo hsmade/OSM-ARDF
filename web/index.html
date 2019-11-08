@@ -6,7 +6,8 @@
     <link rel="stylesheet" href="leaflet.css"/>
     <script src="leaflet.js"></script>
     <script src="leaflet-realtime.js"></script>
-    <script src="leaflet-heat.js"></script>
+    <script src="heatmap.min.js"></script>
+    <script src="leaflet-heatmap.js"></script>
     <title>leaflet test</title>
 </head>
 <body>
@@ -20,6 +21,42 @@
         opacity: 1,
         fillOpacity: 0.8
     };
+
+    function geojsonCrossingOptions(weight) {
+        return {
+            radius: weight + 4,
+            fillColor: "#FF0000",
+            color: "#FFFFFF",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        }
+    }
+
+    let cfg = {
+        // radius should be small ONLY if scaleRadius is true (or small radius is intended)
+        // if scaleRadius is false it will be the constant radius used in pixels
+        "radius": 2,
+        "maxOpacity": .8,
+        // scales the radius based on map zoom
+        "scaleRadius": false,
+        // if set to false the heatmap uses the global maximum for colorization
+        // if activated: uses the data maximum within the current map boundaries
+        //   (there will always be a red spot with useLocalExtremas true)
+        "useLocalExtrema": true,
+        // which field name in your data represents the latitude - default "lat"
+        latField: 'lat',
+        // which field name in your data represents the longitude - default "lng"
+        lngField: 'lng',
+        // which field name in your data represents the data value - default "value"
+        valueField: 'weight'
+    };
+
+
+    let heatmapLayer = new HeatmapOverlay(cfg);
+
+    let heatPoints = [];
+
     let map = L.map('map'),
         positions = L.realtime({
             url: 'http://localhost:8083/api/positions?seconds=60',
@@ -30,20 +67,29 @@
             pointToLayer: function (feature, latlng) {
                 return L.circleMarker(latlng, geojsonPointOptions);
             }
-        }).addTo(map),
-        headings = L.realtime({
-            url: 'http://localhost:8083/api/headings?seconds=60',
-            crossOrigin: true,
-            type: 'json',
-        }, {
-            interval: 1000,
         // }).addTo(map),
-        // crossings = L.realtime({
-        //     url: 'http://localhost:8083/api/crossings?seconds=60',
+        // headings = L.realtime({
+        //     url: 'http://localhost:8083/api/headings?seconds=60',
         //     crossOrigin: true,
         //     type: 'json',
         // }, {
         //     interval: 1000,
+        }).addTo(map),
+        heat = new HeatmapOverlay(cfg).addTo(map),
+        crossings = L.realtime({
+            url: 'http://localhost:8083/api/crossings?seconds=60',
+            crossOrigin: true,
+            type: 'json',
+        }, {
+            interval: 1000,
+            onEachFeature: function (feature, layer) {
+                heatPoints.push({
+                    lat: feature.geometry.coordinates[1],
+                    lng: feature.geometry.coordinates[0],
+                    weight: feature.properties.weight,
+                });
+                heat.setData({data: heatPoints});
+            }
         }).addTo(map);
     map.setView([52.0582, 5.1669], 11);
 

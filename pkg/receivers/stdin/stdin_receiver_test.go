@@ -34,6 +34,10 @@ func (d *databaseMock) GetLines(since time.Duration) ([]*types.Line, error) {
 	return nil, nil
 }
 
+func (d *databaseMock) GetCrossings(since time.Duration) ([]*types.Crossing, error) {
+	return nil, nil
+}
+
 type databaseMockNoConnect struct {
 	value        *types.Measurement
 	measurements int
@@ -56,6 +60,10 @@ func (d *databaseMockNoConnect) GetPositions(since time.Duration) ([]*types.Posi
 }
 
 func (d *databaseMockNoConnect) GetLines(since time.Duration) ([]*types.Line, error) {
+	return nil, nil
+}
+
+func (d *databaseMockNoConnect) GetCrossings(since time.Duration) ([]*types.Crossing, error) {
 	return nil, nil
 }
 

@@ -10,4 +10,5 @@ type Database interface {
 	Add(m *types.Measurement) error
 	GetPositions(since time.Duration) ([]*types.Position, error)
 	GetLines(since time.Duration) ([]*types.Line, error)
+	GetCrossings(since time.Duration) ([]*types.Crossing, error)
 }

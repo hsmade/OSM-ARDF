@@ -13,6 +13,7 @@ func (s *server) routes() {
 	api := s.router.Group("api")
 	api.GET("/positions", s.handlePostions())
 	api.GET("/headings", s.handleHeadings())
+	api.GET("/crossings", s.handleCrossings())
 
 }
 

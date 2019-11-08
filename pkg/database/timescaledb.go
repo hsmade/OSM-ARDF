@@ -81,10 +81,8 @@ func (d *TimescaleDB) Add(m *types.Measurement) error {
 
 	defer conn.Release()
 
-	// INTERSECTION: select ST_AsText(ST_Intersection(a.line, b.line)), count(a.name) from doppler as a, doppler as b where ST_Intersects(a.line, b.line) and a.name < b.name group by ST_Intersection(a.line, b.line);
-
 	startPoint := geo.NewPoint(m.Latitude, m.Longitude)
-	endPoint := startPoint.PointAtDistanceAndBearing(10, float64(m.Bearing))
+	endPoint := startPoint.PointAtDistanceAndBearing(25, float64(m.Bearing))
 
 	query := "insert into \"doppler\"(time, station, point, line, bearing) values($1, $2, ST_GeomFromWKB($3), ST_GeomFromWKB($4), $5)"
 	log.Debugf("insert query: %s", query)
@@ -207,6 +205,55 @@ func (d *TimescaleDB) GetLines(since time.Duration) (lines []*types.Line, err er
 		}
 		lines = append(lines, &newLine)
 		log.Debugf("got line: %v", newLine)
+	}
+	err = rows.Err()
+	return
+}
+
+func (d *TimescaleDB) GetCrossings(since time.Duration) (crossings []*types.Crossing, err error) {
+	if since.Seconds() < 1 {
+		return nil, errors.New("since should be >= 1")
+	}
+	if d.connectionPool == nil {
+		return nil, errors.New("please connect to the database first")
+	}
+	conn, err := d.connectionPool.Acquire(context.Background())
+	if err != nil {
+		log.Errorf("failed to get connection from database pool: %e", err)
+		return nil, err
+	}
+
+	defer conn.Release()
+
+	// INTERSECTION:
+	query := fmt.Sprintf("select ST_AsBinary(ST_Intersection(a.line, b.line)), COUNT(a.station) FROM doppler AS a, doppler AS b WHERE ST_Intersects(a.line, b.line) AND a.station < b.station AND a.time > NOW() - interval '%d seconds' AND b.time > NOW() - interval '%d seconds' GROUP BY ST_Intersection(a.line, b.line);", int(since.Seconds()), int(since.Seconds()))
+	log.Debugf("get lines query: %s", query)
+	rows, err := conn.Query(context.Background(), query)
+
+	if err != nil {
+		log.Errorf("failed to run query: %e", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			crossing     orb.Point
+			weight       int
+		)
+
+		err := rows.Scan(wkb.Scanner(&crossing), &weight)
+		if err != nil {
+			log.Errorf("failed to get row: %e", err)
+			return nil, err
+		}
+		newCrossing := types.Crossing{
+			Longitude: crossing.X(),
+			Latitude: crossing.Y(),
+			Weight:weight,
+		}
+		crossings = append(crossings, &newCrossing)
+		log.Debugf("got line: %v", newCrossing)
 	}
 	err = rows.Err()
 	return
